@@ -270,7 +270,7 @@ export function setupSocket(server) {
   
     console.log("STARTING ROUND", currentRound);
   
-    const roundDuration = firstRound ? 10000 : 10000;
+    const roundDuration = firstRound ? 30000 : 30000;
     const roundEndTime = Date.now() + roundDuration;
   
     game.roundEndTime = roundEndTime;
