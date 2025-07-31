@@ -1,0 +1,43 @@
+# === General ===
+.DS_Store
+*.log
+*.env
+.env.*
+
+
+# === Node.js ===
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# === Vite / React (Client) ===
+client/node_modules/
+client/dist/
+client/build/
+client/.vite/
+
+# === Server ===
+server/node_modules/
+server/dist/
+server/build/
+server/.env
+server/.env.local
+server/.cache/
+
+# === Logs ===
+logs/
+*.log
+*.out
+*.pid
+
+# === IDEs ===
+.vscode/
+.idea/
+*.swp
+
+# === OS Files ===
+Thumbs.db
+ehthumbs.db
+.DS_Store
