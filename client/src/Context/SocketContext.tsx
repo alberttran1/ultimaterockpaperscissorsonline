@@ -101,6 +101,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     }
 
     if (!socketRef.current) {
+      console.log("this is the url for sockets: ", import.meta.env.VITE_BACKEND_URL)
       const socket = io(import.meta.env.VITE_BACKEND_URL, { withCredentials: true });
       socketRef.current = socket;
 

@@ -43,5 +43,5 @@ setupSocket(server); // 👈 This starts your matchmaking + RPS socket logic
 
 const PORT = process.env.PORT || 4000;
 server.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(`🚀 Server running on port:${PORT}`);
 });
