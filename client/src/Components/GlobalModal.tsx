@@ -10,9 +10,7 @@ export default function GlobalModal() {
       className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center"
       onClick={closeModal}
     >
-      <div onClick={(e) => e.stopPropagation()}>
-        {content}
-      </div>
+      <div onClick={(e) => e.stopPropagation()}>{content}</div>
     </div>
   );
 }

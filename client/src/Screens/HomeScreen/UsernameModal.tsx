@@ -8,7 +8,10 @@ interface UsernameModalProps {
   doAfterConfirm: () => void;
 }
 
-const UsernameModal: React.FC<UsernameModalProps> = ({ user, doAfterConfirm }) => {
+const UsernameModal: React.FC<UsernameModalProps> = ({
+  user,
+  doAfterConfirm,
+}) => {
   const [usernameText, setUsernameText] = useState("");
   const { setUser } = useUser();
 
@@ -20,13 +23,15 @@ const UsernameModal: React.FC<UsernameModalProps> = ({ user, doAfterConfirm }) =
       photoURL: user.photoURL,
       username: usernameText,
     });
-    setUser(userRes.data.user)
+    setUser(userRes.data.user);
     doAfterConfirm();
   };
 
   return (
     <div className="p-6 text-center bg-[#1f1233] text-white rounded-xl shadow-2xl max-w-sm mx-auto border border-white/20">
-      <h2 className="text-3xl font-bold mb-6 text-purple-300">Choose a Username</h2>
+      <h2 className="text-3xl font-bold mb-6 text-purple-300">
+        Choose a Username
+      </h2>
 
       <input
         type="text"

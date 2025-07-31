@@ -100,7 +100,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
               const user = await createUserWithEmailAndPassword(
                 auth,
                 email,
-                password
+                password,
               );
               openModal(
                 <UsernameModal
@@ -108,7 +108,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
                   doAfterConfirm={() => {
                     closeModal();
                   }}
-                />
+                />,
               );
             } catch (error: any) {
               console.error("Sign up error:", error);

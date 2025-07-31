@@ -1,38 +1,45 @@
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { io, Socket } from "socket.io-client";
 import { useUser } from "./UserContext";
 import type { MatchPlayer } from "./GameInfoContext";
 
-interface UserConnection{
+interface UserConnection {
   uid: string;
-  username: string,
-  photoURL: string,
+  username: string;
+  photoURL: string;
   queueType: "COMPETITIVE" | "UNRANKED";
   elo?: number;
-};
+}
 
 export interface GameInfo {
-  roomId: string,
-  score: Record<string,number>, //obj with uid -> score
-  round: number,
-  players: MatchPlayer[]
-  roundEndTime: number,
-  gameEnded: boolean,
-  winner: string,
+  roomId: string;
+  score: Record<string, number>; //obj with uid -> score
+  round: number;
+  players: MatchPlayer[];
+  roundEndTime: number;
+  gameEnded: boolean;
+  winner: string;
 }
 
 type SocketEvents = {
   "match-found": (data: GameInfo) => void;
-  "round-start": (data: { round : number, endsAt: number }) => void;
+  "round-start": (data: { round: number; endsAt: number }) => void;
   "rejoin-success": (data: GameInfo) => void;
   "rejoin-failed": (data: { reason: string }) => void;
   "request-choices": () => void;
   "round-results": (data: {
-      round: number;
-      choices: Record<string, "ROCK" | "PAPER" | "SCISSORS">;
-      winner: string;
-      score: Record<string,number>
-    }) => void;
+    round: number;
+    choices: Record<string, "ROCK" | "PAPER" | "SCISSORS">;
+    winner: string;
+    score: Record<string, number>;
+  }) => void;
   "round-end": (data: {
     choices: Record<string, "ROCK" | "PAPER" | "SCISSORS">;
     result: "p1" | "p2" | "draw";
@@ -51,8 +58,12 @@ type EventHandlers = Partial<{
 interface SocketContextValue {
   socket: Socket | null;
   sendReadyForGame: (roomId: string, playerId: string) => void;
-  sendChoice: (roomId: string, playerId: string, choice: "ROCK" | "PAPER" | "SCISSORS")  => void;
-  joinQueue: (userConnection : UserConnection) => void;
+  sendChoice: (
+    roomId: string,
+    playerId: string,
+    choice: "ROCK" | "PAPER" | "SCISSORS",
+  ) => void;
+  joinQueue: (userConnection: UserConnection) => void;
   rejoinRoom: (roomId: string, playerId: string) => void;
   registerHandlers: (handlers: EventHandlers) => void;
   unregisterHandlers: (handlers: EventHandlers) => void;
@@ -63,11 +74,10 @@ interface SocketContextValue {
   startQueue: (type: "COMPETITIVE" | "UNRANKED") => void;
   stopQueue: () => void;
   createCustomGame: () => void;
-  joinCustomGame: (roomId:string) => void;
+  joinCustomGame: (roomId: string) => void;
 
-  customGameRoomId: string,
+  customGameRoomId: string;
   setCustomGameRoomId: React.Dispatch<React.SetStateAction<string>>;
-
 }
 
 const SocketContext = createContext<SocketContextValue | undefined>(undefined);
@@ -76,9 +86,11 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useUser();
   const socketRef = useRef<Socket | null>(null);
   const handlersRef = useRef<EventHandlers>({});
-  const [queueType, setQueueType] = useState<"COMPETITIVE" | "UNRANKED" | null>(null)
-  const [timeInQueue, setTimeInQueue] = useState<number>(0)
-  const [customGameRoomId, setCustomGameRoomId] = useState<string>("")
+  const [queueType, setQueueType] = useState<"COMPETITIVE" | "UNRANKED" | null>(
+    null,
+  );
+  const [timeInQueue, setTimeInQueue] = useState<number>(0);
+  const [customGameRoomId, setCustomGameRoomId] = useState<string>("");
   const queueTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -128,19 +140,23 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     socketRef.current?.emit("game-ready", {
       roomId: roomId,
       playerId: playerId,
-    })
-  }
-
-  const sendChoice = (roomId: string, playerId: string, choice: "ROCK" | "PAPER" | "SCISSORS") => {
-    socketRef.current?.emit("player-choice", { 
-      roomId: roomId, 
-      playerId: playerId, 
-      choice: choice 
     });
   };
 
-  const joinQueue = (userConnection : UserConnection) => {
-    socketRef.current?.emit("join-queue",userConnection);
+  const sendChoice = (
+    roomId: string,
+    playerId: string,
+    choice: "ROCK" | "PAPER" | "SCISSORS",
+  ) => {
+    socketRef.current?.emit("player-choice", {
+      roomId: roomId,
+      playerId: playerId,
+      choice: choice,
+    });
+  };
+
+  const joinQueue = (userConnection: UserConnection) => {
+    socketRef.current?.emit("join-queue", userConnection);
   };
 
   const startQueue = (type: "COMPETITIVE" | "UNRANKED") => {
@@ -152,14 +168,14 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       photoURL: user.photoURL,
       queueType: type,
     });
-    setQueueType(type)
+    setQueueType(type);
     queueTimerRef.current = setInterval(() => {
-      setTimeInQueue(prev => prev + 1);
+      setTimeInQueue((prev) => prev + 1);
     }, 1000);
   };
 
   const stopQueue = () => {
-    setTimeInQueue(0)
+    setTimeInQueue(0);
     if (queueTimerRef.current) {
       clearInterval(queueTimerRef.current);
       queueTimerRef.current = null;
@@ -174,8 +190,8 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       elo: user.elo,
       username: user.username,
       photoURL: user.photoURL,
-   });
-  }
+    });
+  };
 
   const joinCustomGame = (roomId: string) => {
     socketRef.current?.emit("join-custom-room", {
@@ -185,16 +201,16 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         elo: user.elo,
         username: user.username,
         photoURL: user.photoURL,
-      }
-   });
-  }
+      },
+    });
+  };
 
-  const rejoinRoom = (roomId: string, playerId : string) => {
+  const rejoinRoom = (roomId: string, playerId: string) => {
     socketRef.current?.emit("rejoin-room", {
       roomId: roomId,
       playerId: playerId,
     });
-  }
+  };
 
   return (
     <SocketContext.Provider
@@ -214,7 +230,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         joinCustomGame,
         // deleteCustomGame,
         customGameRoomId,
-        setCustomGameRoomId
+        setCustomGameRoomId,
       }}
     >
       {children}

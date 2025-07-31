@@ -1,9 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import {
-  signInWithPopup,
-  GoogleAuthProvider,
-  type User,
-} from "firebase/auth";
+import { signInWithPopup, GoogleAuthProvider, type User } from "firebase/auth";
 import UsernameModal from "./UsernameModal";
 import { auth } from "../../firebase";
 import { useModal } from "../../Context/ModalContext";
@@ -26,32 +22,31 @@ const HomeScreen = () => {
 
       try {
         const existingUser = await getUserById(res.user.uid);
-        if(existingUser.data.user) {
-          setUser(existingUser.data.user)
+        if (existingUser.data.user) {
+          setUser(existingUser.data.user);
           closeModal();
         }
         return;
-      } catch(e: any) { 
-        if(e.response.data.error === "User not found") {
-         openUsernameModal(res.user)
-        } 
-        else throw(e)
+      } catch (e: any) {
+        if (e.response.data.error === "User not found") {
+          openUsernameModal(res.user);
+        } else throw e;
       }
     } catch (error) {
       console.error("Google sign-in error:", error);
     }
   };
 
-  const openUsernameModal = (user : User) => {
+  const openUsernameModal = (user: User) => {
     openModal(
       <UsernameModal
         user={user}
         doAfterConfirm={() => {
           closeModal();
         }}
-      />
+      />,
     );
-  }
+  };
 
   const openLoginModal = () => {
     openModal(
@@ -60,7 +55,7 @@ const HomeScreen = () => {
         doAfterConfirm={() => {
           closeModal();
         }}
-      />
+      />,
     );
   };
 
@@ -84,7 +79,9 @@ const HomeScreen = () => {
             <div className="text-5xl font-adrenaline text-indigo-200 drop-shadow-sm tracking-wide">
               ROCK PAPER SCISSORS
             </div>
-            <div className="text-5xl font-bulletproof text-purple-400">Online</div>
+            <div className="text-5xl font-bulletproof text-purple-400">
+              Online
+            </div>
           </motion.div>
 
           <motion.div
@@ -95,7 +92,11 @@ const HomeScreen = () => {
           >
             <button
               className="text-3xl font-adrenaline text-white py-4 px-10 rounded-xl bg-gradient-to-r from-fuchsia-600 to-indigo-700 shadow-[0_0_30px_rgba(255,255,255,0.3)] border-4 border-white hover:scale-105 transition-all"
-              onClick={firebaseUserData ? () => openUsernameModal(firebaseUserData) : openLoginModal}
+              onClick={
+                firebaseUserData
+                  ? () => openUsernameModal(firebaseUserData)
+                  : openLoginModal
+              }
             >
               Sign in to Continue
             </button>
@@ -109,7 +110,11 @@ const HomeScreen = () => {
             ].map(({ label, path, requiresAuth }) => (
               <motion.div
                 key={label}
-                whileHover={{ scale: 1.1, opacity: 1, transition: { duration: 0.2 } }}
+                whileHover={{
+                  scale: 1.1,
+                  opacity: 1,
+                  transition: { duration: 0.2 },
+                }}
                 className="cursor-pointer opacity-80 hover:text-purple-300"
                 onClick={() => {
                   if (requiresAuth && !user) openLoginModal();

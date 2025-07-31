@@ -13,7 +13,10 @@ type LeaderboardTableProps = {
   currentUserId?: string;
 };
 
-const LeaderboardTable: React.FC<LeaderboardTableProps> = ({ leaderboard, currentUserId }) => {
+const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
+  leaderboard,
+  currentUserId,
+}) => {
   return (
     <div className="overflow-x-auto w-full bg-[#2c1a4f] p-6 rounded-2xl text-white font-sans">
       <table className="min-w-full text-sm border-separate border-spacing-y-2">
@@ -30,7 +33,10 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({ leaderboard, curren
         <tbody>
           {leaderboard.map((player, index) => {
             const totalGames = player.wins + player.losses;
-            const winRate = totalGames > 0 ? ((player.wins / totalGames) * 100).toFixed(1) : "0.0";
+            const winRate =
+              totalGames > 0
+                ? ((player.wins / totalGames) * 100).toFixed(1)
+                : "0.0";
             const isCurrentUser = player.id === currentUserId;
 
             return (
@@ -47,7 +53,9 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({ leaderboard, curren
                 <td className="px-4 py-2 text-center">{player.wins}</td>
                 <td className="px-4 py-2 text-center">{player.losses}</td>
                 <td className="px-4 py-2 text-center">{winRate}%</td>
-                <td className="px-4 py-2 text-center rounded-r-lg">{player.rating}</td>
+                <td className="px-4 py-2 text-center rounded-r-lg">
+                  {player.rating}
+                </td>
               </tr>
             );
           })}

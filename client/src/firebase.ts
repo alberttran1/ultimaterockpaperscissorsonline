@@ -10,7 +10,7 @@ const firebaseConfig = {
   storageBucket: "rockpaperscissorsonline-40dcd.firebasestorage.app",
   messagingSenderId: "1077109038100",
   appId: "1:1077109038100:web:0896f66de4ff8a6c15db01",
-  measurementId: "G-2K3VYSS670"
+  measurementId: "G-2K3VYSS670",
 };
 
 // Initialize Firebase

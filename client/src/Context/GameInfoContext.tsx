@@ -3,17 +3,19 @@ import { type GameInfo } from "./SocketContext";
 
 export type MatchPlayer = {
   uid: string;
-  elo: number
+  elo: number;
   username: string;
   photoURL: string;
 };
 
 type GameInfoContextType = {
   gameInfo: GameInfo | null;
-  setGameInfo: React.Dispatch<React.SetStateAction<GameInfo | null>>
+  setGameInfo: React.Dispatch<React.SetStateAction<GameInfo | null>>;
 };
 
-const GameInfoContext = createContext<GameInfoContextType | undefined>(undefined);
+const GameInfoContext = createContext<GameInfoContextType | undefined>(
+  undefined,
+);
 
 export const GameInfoProvider = ({ children }: { children: ReactNode }) => {
   const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);

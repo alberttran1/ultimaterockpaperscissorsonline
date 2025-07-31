@@ -1,8 +1,8 @@
-import axios from 'axios';
-import { auth } from '../firebase';
+import axios from "axios";
+import { auth } from "../firebase";
 
 const http = axios.create({
-  baseURL: 'http://localhost:4000/api', // adjust as needed
+  baseURL: "http://localhost:4000/api", // adjust as needed
   withCredentials: true, // if using cookies/session
 });
 

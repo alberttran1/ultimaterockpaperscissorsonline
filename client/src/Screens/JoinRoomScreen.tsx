@@ -12,7 +12,9 @@ const JoinRoomScreen = () => {
   const { setGameInfo } = useGameInfo();
   const { user } = useUser();
 
-  const [status, setStatus] = useState<"joining" | "error" | "success">("joining");
+  const [status, setStatus] = useState<"joining" | "error" | "success">(
+    "joining",
+  );
   const [errorMessage, setErrorMessage] = useState("");
 
   // Extract roomId from URL
@@ -49,15 +51,24 @@ const JoinRoomScreen = () => {
       >
         {status === "joining" && (
           <>
-            <div className="text-4xl font-adrenaline tracking-wider">JOINING ROOM</div>
-            <div className="text-lg text-gray-300">Room ID: <span className="font-mono text-yellow-300">{roomId}</span></div>
-            <div className="mt-4 text-lg text-cyan-400 animate-pulse">Looking for your opponent...</div>
+            <div className="text-4xl font-adrenaline tracking-wider">
+              JOINING ROOM
+            </div>
+            <div className="text-lg text-gray-300">
+              Room ID:{" "}
+              <span className="font-mono text-yellow-300">{roomId}</span>
+            </div>
+            <div className="mt-4 text-lg text-cyan-400 animate-pulse">
+              Looking for your opponent...
+            </div>
           </>
         )}
 
         {status === "error" && (
           <>
-            <div className="text-4xl font-adrenaline text-red-400">FAILED TO JOIN</div>
+            <div className="text-4xl font-adrenaline text-red-400">
+              FAILED TO JOIN
+            </div>
             <div className="text-lg text-gray-300">{errorMessage}</div>
             <button
               className="mt-6 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition"

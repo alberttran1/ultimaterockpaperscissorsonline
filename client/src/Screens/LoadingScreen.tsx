@@ -16,7 +16,7 @@ const LoadingScreen = () => {
       <motion.div
         className="flex flex-col items-center text-[5rem] font-bulletproof bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 text-transparent bg-clip-text drop-shadow-lg"
         initial={{ opacity: 0.5, scale: 1 }}
-        animate={{ opacity: [0.5,1,0.5], scale: [1, 1.1, 1] }}
+        animate={{ opacity: [0.5, 1, 0.5], scale: [1, 1.1, 1] }}
         transition={{
           repeat: Infinity,
           repeatType: "loop",
@@ -24,13 +24,13 @@ const LoadingScreen = () => {
           ease: "easeInOut",
         }}
       >
-            <div className="text-[8rem] leading-none font-bulletproof drop-shadow-lg text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500">
-              ULTIMATE
-            </div>
-            <div className="text-5xl font-adrenaline text-indigo-200 drop-shadow-sm tracking-wide">
-              ROCK PAPER SCISSORS
-            </div>
-            <div className="text-5xl font-bulletproof text-purple-400">Online</div>
+        <div className="text-[8rem] leading-none font-bulletproof drop-shadow-lg text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500">
+          ULTIMATE
+        </div>
+        <div className="text-5xl font-adrenaline text-indigo-200 drop-shadow-sm tracking-wide">
+          ROCK PAPER SCISSORS
+        </div>
+        <div className="text-5xl font-bulletproof text-purple-400">Online</div>
       </motion.div>
 
       <motion.div

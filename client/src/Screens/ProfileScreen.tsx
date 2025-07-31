@@ -1,4 +1,3 @@
-import React from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useUser } from "../Context/UserContext";
@@ -38,7 +37,10 @@ const ProfileScreen = () => {
     <div className="min-h-screen w-full bg-[#2c1a4f] text-white font-bulletproof overflow-hidden">
       {/* Top Bar */}
       <header className="h-16 w-full fixed top-0 left-0 z-50 bg-[#150c26]/90 backdrop-blur-sm flex items-center justify-between text-lg md:text-xl font-bold text-indigo-100 px-4 md:px-6 shadow-md">
-        <div className="flex gap-8 cursor-pointer" onClick={() => navigate("/dashboard")}>
+        <div
+          className="flex gap-8 cursor-pointer"
+          onClick={() => navigate("/dashboard")}
+        >
           ← <span className="tracking-widest">DASHBOARD</span>
         </div>
         <div className="tracking-widest text-purple-200">PROFILE</div>

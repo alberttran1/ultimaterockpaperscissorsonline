@@ -1,11 +1,11 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import LeaderboardTable from "./LeaderboardTable";
 import { useSocket, type GameInfo } from "../../Context/SocketContext";
 import StatsGraphs from "./StatsGraphs";
 import { useUser } from "../../Context/UserContext";
-import { FaCircleUser, FaCopy, } from "react-icons/fa6";
+import { FaCircleUser, FaCopy } from "react-icons/fa6";
 import { useGameInfo } from "../../Context/GameInfoContext";
 
 const leaderboardData = [
@@ -21,37 +21,38 @@ const leaderboardData = [
   { id: "u10", name: "Jack", wins: 5, losses: 25, rating: 1300 },
 ];
 
-
 const DashboardScreen = () => {
   const navigate = useNavigate();
-  const { 
-    registerHandlers, 
-    unregisterHandlers, 
-    queueType, 
-    timeInQueue, 
-    startQueue, 
-    stopQueue, 
+  const {
+    registerHandlers,
+    unregisterHandlers,
+    queueType,
+    timeInQueue,
+    startQueue,
+    stopQueue,
     createCustomGame,
     customGameRoomId,
-    setCustomGameRoomId
+    setCustomGameRoomId,
   } = useSocket();
-  const { setGameInfo} = useGameInfo();
-  const {user} = useUser()
-  const [customGameUrl, setCustomGameUrl] = useState<string>("")
+  const { setGameInfo } = useGameInfo();
+  const { user } = useUser();
+  const [customGameUrl, setCustomGameUrl] = useState<string>("");
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const handlers = {
       "match-found": (data: GameInfo) => {
-        stopQueue()
-        setGameInfo(data)
-        navigate(`/game/${data.roomId}`, {state : { startGame: true }})
+        stopQueue();
+        setGameInfo(data);
+        navigate(`/game/${data.roomId}`, { state: { startGame: true } });
       },
-      "room-created": (data:{ roomId: string }) => {
-        setCustomGameRoomId(data.roomId)
-        setCustomGameUrl(`${import.meta.env.VITE_APP_URL}/join?roomId=${data.roomId}`)
+      "room-created": (data: { roomId: string }) => {
+        setCustomGameRoomId(data.roomId);
+        setCustomGameUrl(
+          `${import.meta.env.VITE_APP_URL}/join?roomId=${data.roomId}`,
+        );
         // navigate(`${import.meta.env.VITE_APP_URL}/join?roomId=${data.roomId}`)
-      }
+      },
     };
 
     registerHandlers(handlers);
@@ -62,28 +63,25 @@ const DashboardScreen = () => {
     };
   }, [navigate, registerHandlers, unregisterHandlers, setGameInfo]);
 
-
   const customButtonOnClick = () => {
-    if(!customGameRoomId) {
+    if (!customGameRoomId) {
       createCustomGame();
     }
-  }
-  
+  };
+
   return (
     <div className="min-h-screen w-full flex flex-col bg-[#2c1a4f] text-white font-bulletproof overflow-hidden">
       {/* Top Bar */}
       <header className="h-16 w-full fixed top-0 left-0 z-50 bg-[#150c26]/90 backdrop-blur-sm flex items-center justify-between text-lg md:text-xl font-bold text-indigo-100 px-4 md:px-6 shadow-md">
         <div className="flex gap-8">
-            <div className="tracking-widest">ULTIMATE RPS</div>
+          <div className="tracking-widest">ULTIMATE RPS</div>
         </div>
-        <div 
+        <div
           className="flex items-center gap-4 hover:text-purple-300 transition cursor-pointer"
           onClick={() => navigate("/profile")}
-          >
-          <div className="font-adrenaline">
-            {user.username}
-          </div>
-          <FaCircleUser size={30}/>
+        >
+          <div className="font-adrenaline">{user.username}</div>
+          <FaCircleUser size={30} />
         </div>
       </header>
 
@@ -100,10 +98,10 @@ const DashboardScreen = () => {
             whileHover={{ scale: 1.05 }}
             className="w-full sm:w-[18rem] md:w-[22rem] lg:w-[26rem] xl:w-[30rem] h-[12rem] sm:h-[16rem] lg:h-[30rem] bg-gradient-to-r from-fuchsia-600 to-indigo-700 text-white text-2xl md:text-3xl lg:text-4xl rounded-2xl shadow-[0_0_25px_rgba(255,255,255,0.2)] border-4 border-white font-adrenaline transition"
             onClick={() => {
-              if(queueType === "COMPETITIVE") {
-                stopQueue()
+              if (queueType === "COMPETITIVE") {
+                stopQueue();
               } else {
-                startQueue("COMPETITIVE")
+                startQueue("COMPETITIVE");
               }
             }}
           >
@@ -121,7 +119,8 @@ const DashboardScreen = () => {
                     className="flex flex-col items-center gap-1"
                   >
                     <div className="text-cyan-400">
-                      {Math.floor(timeInQueue / 60)}:{String(timeInQueue % 60).padStart(2, "0")}
+                      {Math.floor(timeInQueue / 60)}:
+                      {String(timeInQueue % 60).padStart(2, "0")}
                     </div>
                     <div className="text-lg font-sans text-gray-400">
                       Estimated: 1:00
@@ -129,7 +128,6 @@ const DashboardScreen = () => {
                   </motion.div>
                 )}
               </AnimatePresence>
-
             </div>
           </motion.button>
 
@@ -138,10 +136,10 @@ const DashboardScreen = () => {
             whileHover={{ scale: 1.05 }}
             className="w-full sm:w-[16rem] md:w-[20rem] lg:w-[20rem] h-[12rem] sm:h-[16rem] lg:h-[30rem] bg-gradient-to-r from-purple-500 to-pink-600 text-white text-2xl md:text-3xl lg:text-4xl rounded-2xl shadow-[0_0_25px_rgba(255,255,255,0.2)] border-4 border-white font-adrenaline transition"
             onClick={() => {
-              if(queueType === "UNRANKED") {
-                stopQueue()
+              if (queueType === "UNRANKED") {
+                stopQueue();
               } else {
-                startQueue("UNRANKED")
+                startQueue("UNRANKED");
               }
             }}
           >
@@ -159,7 +157,8 @@ const DashboardScreen = () => {
                     className="flex flex-col items-center gap-1"
                   >
                     <div className="text-cyan-400">
-                      {Math.floor(timeInQueue / 60)}:{String(timeInQueue % 60).padStart(2, "0")}
+                      {Math.floor(timeInQueue / 60)}:
+                      {String(timeInQueue % 60).padStart(2, "0")}
                     </div>
                     <div className="text-lg font-sans text-gray-400">
                       Estimated: 1:00
@@ -167,7 +166,6 @@ const DashboardScreen = () => {
                   </motion.div>
                 )}
               </AnimatePresence>
-              
             </div>
           </motion.button>
 
@@ -179,8 +177,7 @@ const DashboardScreen = () => {
               onClick={customButtonOnClick}
             >
               CUSTOM
-
-              {customGameRoomId && 
+              {customGameRoomId && (
                 <AnimatePresence>
                   <motion.div
                     key="queue-info"
@@ -221,8 +218,7 @@ const DashboardScreen = () => {
                     </AnimatePresence>
                   </motion.div>
                 </AnimatePresence>
-              }
-
+              )}
             </motion.button>
             <motion.button
               // whileHover={{ scale: 1.05 }}
@@ -237,17 +233,13 @@ const DashboardScreen = () => {
         </motion.div>
       </div>
       <div className="h-fit flex flex-col gap-10 px-10 w-screen m-4">
-        <div className="text-6xl">
-          LEADERBOARD
-        </div>
-        <LeaderboardTable leaderboard={leaderboardData}/>
+        <div className="text-6xl">LEADERBOARD</div>
+        <LeaderboardTable leaderboard={leaderboardData} />
       </div>
 
       <div className="h-fit flex flex-col gap-10 px-10 w-screen m-4">
-        <div className="text-6xl">
-          GLOBAL STATISTICS
-        </div>
-        <StatsGraphs/>
+        <div className="text-6xl">GLOBAL STATISTICS</div>
+        <StatsGraphs />
       </div>
     </div>
   );

@@ -1,27 +1,39 @@
-import { PieChart, Pie, Cell, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { motion } from 'framer-motion';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import { motion } from "framer-motion";
 
-const COLORS = ['#8884d8', '#82ca9d', '#ffc658'];
+const COLORS = ["#8884d8", "#82ca9d", "#ffc658"];
 
 const pieData = [
-  { name: 'Rock', value: 300 },
-  { name: 'Paper', value: 200 },
-  { name: 'Scissors', value: 100 },
+  { name: "Rock", value: 300 },
+  { name: "Paper", value: 200 },
+  { name: "Scissors", value: 100 },
 ];
 
 const lineData = [
-  { day: 'Mon', Rock: 30, Paper: 20, Scissors: 10 },
-  { day: 'Tue', Rock: 20, Paper: 25, Scissors: 15 },
-  { day: 'Wed', Rock: 40, Paper: 15, Scissors: 25 },
-  { day: 'Thu', Rock: 10, Paper: 30, Scissors: 20 },
-  { day: 'Fri', Rock: 25, Paper: 20, Scissors: 30 },
-  { day: 'Sat', Rock: 35, Paper: 10, Scissors: 25 },
-  { day: 'Sun', Rock: 20, Paper: 35, Scissors: 15 },
+  { day: "Mon", Rock: 30, Paper: 20, Scissors: 10 },
+  { day: "Tue", Rock: 20, Paper: 25, Scissors: 15 },
+  { day: "Wed", Rock: 40, Paper: 15, Scissors: 25 },
+  { day: "Thu", Rock: 10, Paper: 30, Scissors: 20 },
+  { day: "Fri", Rock: 25, Paper: 20, Scissors: 30 },
+  { day: "Sat", Rock: 35, Paper: 10, Scissors: 25 },
+  { day: "Sun", Rock: 20, Paper: 35, Scissors: 15 },
 ];
 
-const barData = [
-  { name: 'Wins', Rock: 5, Paper: 8, Scissors: 3 },
-];
+const barData = [{ name: "Wins", Rock: 5, Paper: 8, Scissors: 3 }];
 
 const Graphs = () => {
   return (
@@ -34,7 +46,9 @@ const Graphs = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
           {/* Pie Chart */}
           <div className="bg-[#3b2566] p-6 rounded-2xl shadow-xl">
-            <h2 className="text-xl font-semibold text-center mb-4">RPS Ratio</h2>
+            <h2 className="text-xl font-semibold text-center mb-4">
+              RPS Ratio
+            </h2>
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
                 <Pie
@@ -46,8 +60,11 @@ const Graphs = () => {
                   outerRadius={80}
                   label
                 >
-                  {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  {pieData.map((_entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
                   ))}
                 </Pie>
               </PieChart>
@@ -56,7 +73,9 @@ const Graphs = () => {
 
           {/* Line Chart */}
           <div className="bg-[#3b2566] p-6 rounded-2xl shadow-xl">
-            <h2 className="text-xl font-semibold text-center mb-4">Plays Over the Week</h2>
+            <h2 className="text-xl font-semibold text-center mb-4">
+              Plays Over the Week
+            </h2>
             <ResponsiveContainer width="100%" height={250}>
               <LineChart data={lineData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#555" />
@@ -73,7 +92,9 @@ const Graphs = () => {
 
           {/* Bar Chart */}
           <div className="bg-[#3b2566] p-6 rounded-2xl shadow-xl">
-            <h2 className="text-xl font-semibold text-center mb-4">Wins Today</h2>
+            <h2 className="text-xl font-semibold text-center mb-4">
+              Wins Today
+            </h2>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={barData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#555" />

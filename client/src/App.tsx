@@ -12,12 +12,11 @@ function App() {
       <SocketProvider>
         <ModalProvider>
           <GameInfoProvider>
-            <RouterComponent/>
+            <RouterComponent />
           </GameInfoProvider>
         </ModalProvider>
       </SocketProvider>
     </UserProvider>
-
   );
 }
 
