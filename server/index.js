@@ -17,7 +17,7 @@ const server = http.createServer(app);
 // Allow only trusted origins
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://ultimaterockpaperscissorsonline.netlify.app/',
+  'https://ultimaterockpaperscissorsonline.netlify.app',
 ];
 
 app.use(cors({
