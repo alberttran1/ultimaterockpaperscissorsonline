@@ -3,10 +3,14 @@ import { useGameInfo } from "../../Context/GameInfoContext";
 import { FaHandPaper, FaHandRock } from "react-icons/fa";
 import { FaHandScissors } from "react-icons/fa6";
 import { AnimatePresence, motion, useAnimation } from "framer-motion";
-import rock from "../../assets/rock.png";
-import paper from "../../assets/paper.png";
-import scissors from "../../assets/scissors.png";
-import hand from "../../assets/hand.png";
+import rock from "../../assets/images/rock.png";
+import paper from "../../assets/images/paper.png";
+import scissors from "../../assets/images/scissors.png";
+import hand from "../../assets/images/hand.png";
+import enemyrock from "../../assets/images/enemyrock.png";
+import enemypaper from "../../assets/images/enemypaper.png";
+import enemyscissors from "../../assets/images/enemyscissors.png";
+import enemyhand from "../../assets/images/enemyhand.png";
 import { useSocket, type GameInfo } from "../../Context/SocketContext";
 import { useParams } from "react-router-dom";
 import { useUser } from "../../Context/UserContext";
@@ -23,6 +27,7 @@ const GameScreen = () => {
     joinQueue,
     sendReadyForGame,
     sendChoice,
+    setShownHand,
     rejoinRoom,
     registerHandlers,
     unregisterHandlers,
@@ -30,7 +35,7 @@ const GameScreen = () => {
   const [showHandState, setShowHandState] = useState<
     "ROCK" | "PAPER" | "SCISSORS"
   >("ROCK");
-  const [_showOpponentHandState, setOpponentHandState] = useState<
+  const [showEnemyHandState, setEnemyHandState] = useState<
     "ROCK" | "PAPER" | "SCISSORS"
   >("ROCK");
   const [playingHandState, setPlayingHandState] = useState<
@@ -49,6 +54,7 @@ const GameScreen = () => {
     winner: string;
     matchResult: "WIN" | "LOSE";
   } | null>(null);
+  const [showEmotes, setShowEmotes] = useState(false);
 
   const [disabled, setDisabled] = useState<boolean>(false);
   const [showHands, setShowHands] = useState<boolean>(true);
@@ -56,9 +62,16 @@ const GameScreen = () => {
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
   const jitterControls = useAnimation();
+  const enemyJitterControls = useAnimation();
   const handControls = useAnimation();
 
-  console.log(gameInfo?.score);
+
+  const enemyhandImage =
+    showEnemyHandState === "ROCK"
+      ? enemyrock
+      : showEnemyHandState === "PAPER"
+        ? enemypaper
+        : enemyscissors;
 
   const handImage =
     showHandState === "ROCK"
@@ -96,7 +109,7 @@ const GameScreen = () => {
     if (countdownRef.current) clearInterval(countdownRef.current);
     setTimeout(() => {
       setShowHandState(data.choices[user.uid]);
-      setOpponentHandState(data.choices[otherUid]);
+      setEnemyHandState(data.choices[otherUid]);
       setShowHands(true);
       setGameInfo((prev) => {
         if (!prev) throw new Error("gameInfo should not be null here");
@@ -137,9 +150,9 @@ const GameScreen = () => {
 
   const setHand = useCallback(
     (hand: "ROCK" | "PAPER" | "SCISSORS") => {
-      console.log(isHandLockedIn);
       if (!isHandLockedIn) setPlayingHandState(hand);
       setShowHandState(hand);
+      setShownHand(gameInfo?.roomId!, user.uid, hand)
       jitterControls.start({
         x: [30, -30, 30, -30, 0],
         transition: { duration: 0.1 },
@@ -208,6 +221,15 @@ const GameScreen = () => {
         setShowHandState("ROCK");
         setPlayingHandState("RANDOM");
       },
+      "opponent-shown-hand": (data: { hand: "ROCK" | "PAPER" | "SCISSORS" | null}) => {
+        console.log("WOW", data.hand)
+        if(!data.hand) return;
+        setEnemyHandState(data.hand)
+        enemyJitterControls.start({
+          x: [30, -30, 30, -30, 0],
+          transition: { duration: 0.1 },
+        });
+      },
       "request-hands": () => {
         console.log("SUBMITTING THROUGH REQUEST");
         submitHand();
@@ -255,6 +277,7 @@ const GameScreen = () => {
     displayRoundResults,
     registerHandlers,
     unregisterHandlers,
+    enemyJitterControls,
   ]);
 
   useEffect(() => {
@@ -536,6 +559,84 @@ const GameScreen = () => {
                   Home
                 </motion.button>
               </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
+
+        <motion.div
+          className="absolute bottom-[2rem] left-[2rem] z-[300]"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.button
+            className="bg-yellow-400 text-white w-14 h-14 rounded-full shadow-lg border-4 border-white flex items-center justify-center text-2xl hover:scale-110 transition-transform"
+            onClick={() => setShowEmotes((prev) => !prev)}
+          >
+            😊
+          </motion.button>
+
+          <AnimatePresence>
+            {showEmotes && (
+              <motion.div
+                className="absolute bottom-20 left-0 flex flex-wrap gap-2 w-48 bg-[#3b2566] p-4 rounded-xl shadow-xl border-2 border-white"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.3 }}
+              >
+                {["😀", "😎", "😡", "😭", "😂", "😱", "🥶", "💀"].map((emote, i) => (
+                  <motion.button
+                    key={i}
+                    className="text-2xl hover:scale-125 transition-transform"
+                    onClick={() => {
+                      console.log("Emote sent:", emote);
+                      // sendEmote(emote) — you can hook this up to socket later
+                      setShowEmotes(false);
+                    }}
+                  >
+                    {emote}
+                  </motion.button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        <AnimatePresence>
+          {showHands && (
+            <motion.div animate={handControls} exit={{ opacity: 0 }}>
+              <motion.div
+                className="absolute top-[17rem] left-1/2"
+                style={{ translateX: "-50%" }}
+                initial={{ y: 200 }}
+                animate={{ y: 0 }}
+              >
+                <div className="animate-bob animation-delay-5">
+                  <img
+                    src={enemyhand}
+                    alt="hand shadow"
+                    className="w-[20rem] h-auto opacity-50"
+                  />
+                </div>
+              </motion.div>
+              <motion.div
+                className="absolute top-[7rem] left-1/2"
+                style={{ translateX: "-40%" }}
+                initial={{ y: -100 }}
+                animate={{ y: 0 }}
+              >
+                {" "}
+                <div className="animate-bob animation-delay-0">
+                  <motion.img
+                    src={enemyhandImage}
+                    alt="hand"
+                    animate={enemyJitterControls}
+                    className="w-[16rem] h-auto"
+                  />
+                </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>

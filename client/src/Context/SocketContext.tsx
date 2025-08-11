@@ -63,6 +63,11 @@ interface SocketContextValue {
     playerId: string,
     choice: "ROCK" | "PAPER" | "SCISSORS",
   ) => void;
+  setShownHand:  (
+    roomId: string,
+    playerId: string,
+    hand: "ROCK" | "PAPER" | "SCISSORS",
+  ) => void;
   joinQueue: (userConnection: UserConnection) => void;
   rejoinRoom: (roomId: string, playerId: string) => void;
   registerHandlers: (handlers: EventHandlers) => void;
@@ -101,8 +106,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     }
 
     if (!socketRef.current) {
-      console.log("this is the url for sockets: ", import.meta.env.VITE_BACKEND_URL)
-      const socket = io(import.meta.env.VITE_BACKEND_URL, { withCredentials: true });
+      const socket = io(import.meta.env.VITE_BACKEND_URL || "http://localhost:4000", { withCredentials: true });
       socketRef.current = socket;
 
       socket.on("connect", () => {
@@ -155,6 +159,18 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       choice: choice,
     });
   };
+
+  const setShownHand = (
+    roomId: string,
+    playerId: string,
+    hand: "ROCK" | "PAPER" | "SCISSORS",
+  ) => {
+    socketRef.current?.emit("change-shown-hand", {
+      roomId: roomId,
+      playerId: playerId,      
+      hand: hand                 
+    });
+  }
 
   const joinQueue = (userConnection: UserConnection) => {
     socketRef.current?.emit("join-queue", userConnection);
@@ -219,6 +235,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         socket: socketRef.current,
         sendReadyForGame,
         sendChoice,
+        setShownHand,
         joinQueue,
         rejoinRoom,
         registerHandlers,
