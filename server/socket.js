@@ -2,6 +2,10 @@ import { Server } from "socket.io";
 import { getUserById } from "./controllers/userController.js";
 import crypto from 'crypto';
 
+import Match from "./models/Match.js";
+import Round from "./models/Round.js";
+
+
 
 const unrankedQueue = new Set();
 const competitiveQueue = new Map();
@@ -142,6 +146,26 @@ export function setupSocket(server) {
         acceptChoices(roomId)
       }
     })
+
+    socket.on("change-shown-hand", ({ roomId, playerId, hand }) => {
+
+      console.log("1", hand)
+      const game = competitiveGames.get(roomId) || unrankedGames.get(roomId);
+      if (!game) return;
+
+      console.log("2")
+
+      const validHands = ["ROCK", "PAPER", "SCISSORS", null];
+      if (!validHands.includes(hand)) return;
+
+      console.log(hand)
+      console.log("3")
+
+      socket.to(roomId).emit("opponent-shown-hand", {
+        // playerId,
+        hand,
+      });
+    });
 
     socket.on("disconnect", () => {
       competitiveQueue.delete(socket.id);
@@ -292,7 +316,7 @@ export function setupSocket(server) {
   }
   
 
-  function acceptChoices(roomId) {
+  async function acceptChoices(roomId) {
     const game = competitiveGames.get(roomId) || unrankedGames.get(roomId);
     if (!game) return;
   
@@ -332,6 +356,40 @@ export function setupSocket(server) {
       winner,
       score: game.score,
     });
+
+    try {
+      // Create Match doc if not created yet
+      if (!game.matchId) {
+        const matchDoc = new Match({
+          player1: game.players[0].uid,
+          player2: game.players[1].uid,
+          winner: null,
+          createdAt: new Date(),
+        });
+        const savedMatch = await matchDoc.save();
+        game.matchId = savedMatch._id;
+      }
+
+      // Determine winner for DB (must be 'player1', 'player2', or 'draw')
+      let roundWinner = 'draw';
+      if (winner === game.players[0].uid) roundWinner = 'player1';
+      else if (winner === game.players[1].uid) roundWinner = 'player2';
+
+      const roundDoc = new Round({
+        matchId: game.matchId,
+        roundNumber: round,
+        player1Hand: choice1,
+        player2Hand: choice2,
+        winner: roundWinner,
+        timestamp: new Date(),
+      });
+
+      await roundDoc.save();
+    } catch (error) {
+      console.error("Error saving round to DB:", error);
+    }
+
+
   
     const winsNeeded = 4;
     const scoreVals = Object.values(game.score);
@@ -348,6 +406,27 @@ export function setupSocket(server) {
         finalScore: game.score,
         winner: game.winner
       });
+
+      try {
+        if (game.matchId) {
+          // Map winner uid to player1/player2 or 'draw'
+          let matchWinner = 'draw';
+          if (game.winner === game.players[0].uid) matchWinner = game.players[0].uid;
+          else if (game.winner === game.players[1].uid) matchWinner = game.players[1].uid;
+
+          await Match.findByIdAndUpdate(game.matchId, {
+            winner: matchWinner,
+          });
+        }
+      } catch (error) {
+        console.error("Error updating match results:", error);
+      }
+
+      // Clean up games after saving to DB
+      competitiveGames.delete(roomId);
+      unrankedGames.delete(roomId);
+
+
     } else {
       setTimeout(() => {
         startRound(roomId, false);

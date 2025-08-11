@@ -1,28 +1,14 @@
 // models/Round.ts
 import mongoose from "mongoose";
-const { Schema, model, Types } = mongoose;
+const { Schema, model } = mongoose;
 
 const roundSchema = new Schema({
-  gameId: { type: Types.ObjectId, ref: "Game", required: true },
-  roundIndex: { type: Number, required: true },
-
-  player1Move: {
-    type: String,
-    enum: ["rock", "paper", "scissors", null],
-    default: null,
-  },
-  player2Move: {
-    type: String,
-    enum: ["rock", "paper", "scissors", null],
-    default: null,
-  },
-  result: {
-    type: String,
-    enum: ["player1", "player2", "draw", null],
-    default: null,
-  },
-
-  createdAt: { type: Date, default: Date.now },
+  matchId: { type: Schema.Types.ObjectId, ref: 'Match', required: true },
+  roundNumber: { type: Number, required: true },
+  player1Hand: { type: String, enum: ['rock', 'paper', 'scissors'], required: true },
+  player2Hand: { type: String, enum: ['rock', 'paper', 'scissors'], required: true },
+  winner: { type: String, enum: ['player1', 'player2', 'draw'], required: true },
+  timestamp: { type: Date, default: Date.now },
 });
 
 export default model("Round", roundSchema);
