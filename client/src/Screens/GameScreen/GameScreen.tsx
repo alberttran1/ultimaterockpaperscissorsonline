@@ -527,7 +527,7 @@ const GameScreen = () => {
               </div>
 
               <div className="flex gap-4 mt-6">
-                <motion.button
+                {/* <motion.button
                   whileHover={{ scale: 1.2 }}
                   className="bg-indigo-600 hover:bg-indigo-700 transition-colors px-4 py-2 rounded-xl text-white shadow-lg border-2 border-white"
                   onClick={() => {
@@ -535,8 +535,8 @@ const GameScreen = () => {
                   }}
                 >
                   Rematch
-                </motion.button>
-                <motion.button
+                </motion.button> */}
+                {/* <motion.button
                   whileHover={{ scale: 1.2 }}
                   className="bg-blue-600 hover:bg-blue-700 transition-colors px-4 py-2 rounded-xl text-white shadow-lg border-2 border-white"
                   onClick={() => {
@@ -544,7 +544,7 @@ const GameScreen = () => {
                   }}
                 >
                   Queue Again
-                </motion.button>
+                </motion.button> */}
                 <motion.button
                   whileHover={{ scale: 1.2 }}
                   className="bg-red-600 hover:bg-red-700 transition-colors px-4 py-2 rounded-xl text-white shadow-lg border-2 border-white"
