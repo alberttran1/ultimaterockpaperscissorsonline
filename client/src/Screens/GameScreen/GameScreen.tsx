@@ -25,7 +25,6 @@ const GameScreen = () => {
   const { user } = useUser();
   const { roomId: routerRoomId } = useParams<{ roomId: string }>();
   const {
-    joinQueue,
     sendReadyForGame,
     sendChoice,
     setShownHand,
