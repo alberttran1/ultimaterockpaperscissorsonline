@@ -1,6 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  safelist: ["bg-gray-600","bg-fuchsia-600","bg-blue-600","bg-indigo-600","drop-shadow-gray-400","drop-shadow-green-400","drop-shadow-red-400"],
   theme: {
     extend: {
       fontFamily: {

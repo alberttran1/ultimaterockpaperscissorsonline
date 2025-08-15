@@ -12,11 +12,12 @@ import enemypaper from "../../assets/images/enemypaper.png";
 import enemyscissors from "../../assets/images/enemyscissors.png";
 import enemyhand from "../../assets/images/enemyhand.png";
 import { useSocket, type GameInfo } from "../../Context/SocketContext";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useUser } from "../../Context/UserContext";
 import LoadingScreen from "../LoadingScreen";
 import { useLocation } from "react-router-dom";
 import RoundStart from "./RoundStart";
+import ProfilePicture from "../../Components/ProfilePicture";
 
 const GameScreen = () => {
   const { state } = useLocation();
@@ -65,6 +66,8 @@ const GameScreen = () => {
   const enemyJitterControls = useAnimation();
   const handControls = useAnimation();
 
+  const navigate = useNavigate();
+
 
   const enemyhandImage =
     showEnemyHandState === "ROCK"
@@ -103,7 +106,7 @@ const GameScreen = () => {
     const otherUid = Object.keys(data.choices).find((uid) => uid !== user.uid)!;
 
     setDisabled(true);
-    setIsHandLockedIn(false);
+    setIsHandLockedIn(true);
     setShowHands(false);
     setTimer(undefined);
     if (countdownRef.current) clearInterval(countdownRef.current);
@@ -208,6 +211,7 @@ const GameScreen = () => {
         setLoading(false);
       },
       "round-start": (data: { round: number; endsAt: number }) => {
+        console.log("ROUND START", data)
         setGameInfo((prev) => {
           if (!prev) throw new Error("gameInfo should not be null here");
           return {
@@ -217,8 +221,10 @@ const GameScreen = () => {
         });
         startCountdown(data.endsAt);
         setDisabled(false);
+        setIsHandLockedIn(false)
         displayRoundStart();
         setShowHandState("ROCK");
+        setEnemyHandState("ROCK")
         setPlayingHandState("RANDOM");
       },
       "opponent-shown-hand": (data: { hand: "ROCK" | "PAPER" | "SCISSORS" | null}) => {
@@ -231,7 +237,6 @@ const GameScreen = () => {
         });
       },
       "request-hands": () => {
-        console.log("SUBMITTING THROUGH REQUEST");
         submitHand();
       },
       "round-results": (data: {
@@ -240,7 +245,6 @@ const GameScreen = () => {
         winner: string;
         score: Record<string, number>;
       }) => {
-        console.log("MATCH RESULTS", data);
         displayRoundResults(data);
       },
       "match-end": (data: {
@@ -291,9 +295,8 @@ const GameScreen = () => {
         setHand("PAPER");
       } else if (key === "c") {
         setHand("SCISSORS");
-      } else if (key === "enter" && playingHandState && gameInfo?.roomId) {
+      } else if (key === "enter" && playingHandState != "RANDOM" && gameInfo?.roomId) {
         submitHand();
-        console.log("SUBMITTING THROUGH KEYPRESS");
       }
     };
 
@@ -316,9 +319,15 @@ const GameScreen = () => {
           ROUND {gameInfo.round}
         </div>
         <div>
-          <div className="flex flex-col items-center text-white font-bulletproof text-3xl p-4">
+          <div 
+            className="flex flex-col items-center text-white font-bulletproof text-3xl p-4">
             YOU ARE PLAYING:
-            <div className="text-6xl">{playingHandState || "--"}</div>
+            <motion.div 
+              className="text-6xl"
+              animate={{ scale: isHandLockedIn ? 1 : 0.9, opacity: isHandLockedIn? 1 : 0.7 }}
+            >
+              {playingHandState || "--"}
+            </motion.div>
           </div>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <div className="w-fit h-fit bottom-[10%] bg-[#472d7c] shadow-lg rounded-lg flex flex-col gap-4 p-10">
@@ -334,10 +343,10 @@ const GameScreen = () => {
 
                   const color = disabled
                     ? "gray-600"
+                    : hand === "PAPER"
+                    ? "fuchsia-600"
                     : hand === "ROCK"
                       ? "blue-600"
-                      : hand === "PAPER"
-                        ? "fuchsia-600"
                         : "indigo-600";
 
                   return (
@@ -380,10 +389,7 @@ const GameScreen = () => {
         <div className="w-full h-fit flex justify-between items-center">
           <div className="flex flex-col gap-4 items-start">
             <div className="flex gap-4 items-center">
-              <img
-                src={gameInfo.players[currentUserIndex].photoURL}
-                className="h-14 rounded-full"
-              />
+              <ProfilePicture player={gameInfo.players[currentUserIndex]} />
               <div className="font-adrenaline text-white text-2xl">
                 {gameInfo.players[currentUserIndex].username}
               </div>
@@ -401,18 +407,15 @@ const GameScreen = () => {
               ))}
             </div>
           </div>
-
-          <div className="text-4xl text-white font-bulletproof">{timer}</div>
+          
+          <div className="absolute left-1/2 -translate-x-1/2 text-4xl text-white font-bulletproof">{timer}</div>
 
           <div className="flex flex-col gap-4 items-end">
             <div className="flex gap-4 items-center">
               <div className="font-adrenaline text-white text-2xl">
                 {gameInfo.players[otherUserIndex].username}
               </div>
-              <img
-                src={gameInfo.players[otherUserIndex].photoURL}
-                className="h-14 rounded-full"
-              />
+              <ProfilePicture player={gameInfo.players[otherUserIndex]} />
             </div>
             <div className="flex gap-2">
               {Array.from({ length: 4 }).map((_, i) => (
@@ -453,7 +456,7 @@ const GameScreen = () => {
                   ease: "easeOut",
                   delay: 0.2,
                 }}
-                className={`text-7xl sm:text-8xl font-bold drop-shadow-[0_0_20px_rgba(255,255,0,0.7)] whitespace-nowrap ${
+                className={`text-7xl sm:text-8xl font-bold whitespace-nowrap ${
                   roundResult === "WIN"
                     ? "text-green-400 drop-shadow-[0_0_20px_rgba(0,255,0,0.7)]"
                     : roundResult === "LOSE"
@@ -547,13 +550,7 @@ const GameScreen = () => {
                   whileHover={{ scale: 1.2 }}
                   className="bg-red-600 hover:bg-red-700 transition-colors px-4 py-2 rounded-xl text-white shadow-lg border-2 border-white"
                   onClick={() => {
-                    joinQueue({
-                      uid: user.uid,
-                      elo: user.elo,
-                      username: user.username,
-                      photoURL: user.photoURL,
-                      queueType: "COMPETITIVE",
-                    });
+                    navigate("/dashboard")
                   }}
                 >
                   Home
@@ -608,7 +605,7 @@ const GameScreen = () => {
           {showHands && (
             <motion.div animate={handControls} exit={{ opacity: 0 }}>
               <motion.div
-                className="absolute top-[17rem] left-1/2"
+                className="absolute top-[34vh] left-1/2"
                 style={{ translateX: "-50%" }}
                 initial={{ y: 200 }}
                 animate={{ y: 0 }}
@@ -617,12 +614,12 @@ const GameScreen = () => {
                   <img
                     src={enemyhand}
                     alt="hand shadow"
-                    className="w-[20rem] h-auto opacity-50"
+                    className="mine-w-[20rem] w-[40vh] h-auto opacity-50"
                   />
                 </div>
               </motion.div>
               <motion.div
-                className="absolute top-[7rem] left-1/2"
+                className="absolute top-[14vh] left-1/2"
                 style={{ translateX: "-40%" }}
                 initial={{ y: -100 }}
                 animate={{ y: 0 }}
@@ -633,7 +630,7 @@ const GameScreen = () => {
                     src={enemyhandImage}
                     alt="hand"
                     animate={enemyJitterControls}
-                    className="w-[16rem] h-auto"
+                    className="min-w-[16rem] w-[32vh] h-auto"
                   />
                 </div>
               </motion.div>
@@ -645,7 +642,7 @@ const GameScreen = () => {
           {showHands && (
             <motion.div animate={handControls} exit={{ opacity: 0 }}>
               <motion.div
-                className="absolute bottom-[-2rem] left-1/2"
+                className="absolute bottom-[-4vh] left-1/2"
                 style={{ translateX: "-50%" }}
                 initial={{ y: 200 }}
                 animate={{ y: 0 }}
@@ -654,12 +651,12 @@ const GameScreen = () => {
                   <img
                     src={hand}
                     alt="hand shadow"
-                    className="w-[25rem] h-auto opacity-50"
+                    className="min-w-[25rem] w-[50vh] h-auto opacity-50"
                   />
                 </div>
               </motion.div>
               <motion.div
-                className="absolute bottom-[6rem] left-1/2"
+                className="absolute bottom-[12vh] left-1/2"
                 style={{ translateX: "-50%" }}
                 initial={{ y: -100 }}
                 animate={{ y: 0 }}
@@ -670,7 +667,7 @@ const GameScreen = () => {
                     src={handImage}
                     alt="hand"
                     animate={jitterControls}
-                    className="w-[25rem] h-auto"
+                    className="min-w-[25rem] w-[50vh] h-auto"
                   />
                 </div>
               </motion.div>
