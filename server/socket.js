@@ -231,7 +231,7 @@ export function setupSocket(server) {
     }
 
     // start with bot from 4-10 seconds after queue start
-    const randomDelay = Math.floor(Math.random() * (10000)) + 2000; // random between 2000 and 10000 ms
+    const randomDelay = Math.floor(Math.random() * (10000)) + 2000; // random between 10000 and 12000 ms
     setTimeout(() => {
       startMatchWithBot(newPlayer, "COMPETITIVE");
     }, randomDelay);
@@ -384,7 +384,7 @@ export function setupSocket(server) {
 
     if (!choice1 || !choice2) return;
 
-    game.stopBot()
+    if (game.stopBot) game.stopBot()
 
     // Determine winner
     let winner = null;
