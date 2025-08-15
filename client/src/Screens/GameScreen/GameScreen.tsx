@@ -371,7 +371,7 @@ const GameScreen = () => {
                     : {}
                 }
                 initial={{ opacity: 0.9 }}
-                className={`h-14 w-full border flex justify-center items-center ${playingHandState != "RANDOM" && !disabled ? "bg-gradient-to-r from-fuchsia-600 via-blue-600 to-indigo-600 cursor-pointer" : "bg-gray-600"} text-white text-xl rounded-2xl border-4 border-white font-adrenaline transition-colors`}
+                className={`h-14 w-full border flex justify-center items-center ${playingHandState != "RANDOM" && (!disabled && !isHandLockedIn) ? "bg-gradient-to-r from-fuchsia-600 via-blue-600 to-indigo-600 cursor-pointer" : "bg-gray-600"} text-white text-xl rounded-2xl border-4 border-white font-adrenaline transition-colors`}
                 onClick={
                   !disabled && playingHandState !== "RANDOM"
                     ? submitHand
