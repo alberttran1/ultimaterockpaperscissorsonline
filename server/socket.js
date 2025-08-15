@@ -1,11 +1,9 @@
 import { Server } from "socket.io";
-import { getUserById } from "./controllers/userController.js";
-import crypto from 'crypto';
+import crypto from "crypto";
 
 import Match from "./models/Match.js";
 import Round from "./models/Round.js";
-
-
+import { createHiddenBot, playBotRound } from "./bot.js";
 
 const unrankedQueue = new Set();
 const competitiveQueue = new Map();
@@ -17,8 +15,8 @@ export function setupSocket(server) {
   const io = new Server(server, {
     cors: {
       origin: [
-        'http://localhost:5173',
-        'https://ultimaterockpaperscissorsonline.netlify.app',
+        "http://localhost:5173",
+        "https://ultimaterockpaperscissorsonline.netlify.app",
       ],
       credentials: true,
     },
@@ -50,16 +48,18 @@ export function setupSocket(server) {
 
     socket.on("create-custom-room", (player) => {
       const roomId = crypto.randomUUID();
-    
+
       const game = {
         roomId,
-        players: [{
-          uid: player.uid,
-          username: player.username,
-          photoURL: player.photoURL,
-          socketId: socket.id,
-          elo: player.elo,
-        }],
+        players: [
+          {
+            uid: player.uid,
+            username: player.username,
+            photoURL: player.photoURL,
+            socketId: socket.id,
+            elo: player.elo,
+          },
+        ],
         score: { [player.uid]: 0 },
         readyCheck: { [player.uid]: false },
         playerChoices: {},
@@ -68,7 +68,7 @@ export function setupSocket(server) {
         gameEnded: false,
         round: 0,
       };
-    
+
       customRooms.set(roomId, game);
       socket.join(roomId);
       socket.emit("room-created", { roomId });
@@ -80,7 +80,7 @@ export function setupSocket(server) {
         socket.emit("join-room-failed", { reason: "Room full or doesn't exist" });
         return;
       }
-    
+
       game.players.push({
         uid: player.uid,
         username: player.username,
@@ -88,19 +88,19 @@ export function setupSocket(server) {
         socketId: socket.id,
         elo: player.elo,
       });
-    
+
       game.score[player.uid] = 0;
       game.readyCheck[player.uid] = false;
-    
+
       customRooms.set(roomId, game);
       socket.join(roomId);
-    
+
       // move to unrankedGames once full
       customRooms.delete(roomId);
       unrankedGames.set(roomId, game);
-    
+
       io.to(roomId).emit("match-found", game);
-    });    
+    });
 
     socket.on("rejoin-room", ({ roomId, playerId }) => {
       const game = competitiveGames.get(roomId) || unrankedGames.get(roomId);
@@ -118,22 +118,32 @@ export function setupSocket(server) {
       socket.join(roomId);
       player.socketId = socket.id;
 
+      if (game.disconnectTimeout) {
+        clearTimeout(game.disconnectTimeout);
+        game.disconnectTimeout = null;
+      }
+
       socket.emit("rejoin-success", game);
     });
 
-    socket.on("game-ready", ({roomId, playerId}) => {
+    socket.on("game-ready", ({ roomId, playerId }) => {
       const game = competitiveGames.get(roomId) || unrankedGames.get(roomId);
       if (!game) return;
 
       game.readyCheck[playerId] = true;
 
-      if(!game.gameStarted && Object.values(game.readyCheck).every(value => value === true)) {
-        game.gameStarted = true;
-        startRound(roomId,true);
-      }
-    })
 
-    socket.on("player-choice", ({roomId, playerId, choice}) => {
+      if (
+        !game.gameStarted &&
+        (Object.values(game.readyCheck).every((value) => value === true) || 
+        game.players.find((p) => p.isBot))
+      ) {
+        game.gameStarted = true;
+        startRound(roomId, true);
+      }
+    });
+
+    socket.on("player-choice", ({ roomId, playerId, choice }) => {
       const game = competitiveGames.get(roomId) || unrankedGames.get(roomId);
       if (!game || game.playerChoices?.[game.round]?.[playerId]) return;
 
@@ -142,29 +152,30 @@ export function setupSocket(server) {
       }
       game.playerChoices[game.round][playerId] = choice;
 
-      if(game.playerChoices[game.round][game.players[0].uid] && game.playerChoices[game.round][game.players[1].uid] && !game.choicesAccepted[game.round]) {
-        acceptChoices(roomId)
+      if (
+        game.playerChoices[game.round][game.players[0].uid] &&
+        game.playerChoices[game.round][game.players[1].uid] &&
+        !game.choicesAccepted[game.round]
+      ) {
+        acceptChoices(roomId);
       }
-    })
+    });
 
     socket.on("change-shown-hand", ({ roomId, playerId, hand }) => {
-
-      console.log("1", hand)
       const game = competitiveGames.get(roomId) || unrankedGames.get(roomId);
       if (!game) return;
-
-      console.log("2")
 
       const validHands = ["ROCK", "PAPER", "SCISSORS", null];
       if (!validHands.includes(hand)) return;
 
-      console.log(hand)
-      console.log("3")
-
       socket.to(roomId).emit("opponent-shown-hand", {
-        // playerId,
         hand,
       });
+    });
+
+    // Custom event triggered by bot.js to accept choices after bot plays
+    socket.on("bot-round-ready", ({ roomId }) => {
+      acceptChoices(roomId);
     });
 
     socket.on("disconnect", () => {
@@ -173,7 +184,34 @@ export function setupSocket(server) {
         if (p.socketId === socket.id) unrankedQueue.delete(p);
       });
 
-      // Optionally: start a timer to clean up games if both players disconnect
+      const game =
+        Array.from(competitiveGames.values()).find(g =>
+          g.players.some(p => p.socketId === socket.id)
+        ) ||
+        Array.from(unrankedGames.values()).find(g =>
+          g.players.some(p => p.socketId === socket.id)
+        );
+
+      if (game && !game.gameEnded) {
+        const disconnectedPlayer = game.players.find(p => p.socketId === socket.id);
+        const opponent = game.players.find(p => p.socketId !== socket.id);
+
+        game.disconnectTimeout = setTimeout(() => {
+          if (!game.gameEnded) {
+            game.gameEnded = true;
+            game.winner = opponent.uid;
+
+            io.to(game.roomId).emit("match-end", {
+              finalScore: game.score,
+              winner: opponent.uid,
+              reason: "opponent-disconnected"
+            });
+
+            competitiveGames.delete(game.roomId);
+            unrankedGames.delete(game.roomId);
+          }
+        }, 15000); // 15 seconds
+      }
     });
   });
 
@@ -191,17 +229,34 @@ export function setupSocket(server) {
         return;
       }
     }
+
+    // start with bot from 4-10 seconds after queue start
+    const randomDelay = Math.floor(Math.random() * (10000)) + 2000; // random between 2000 and 10000 ms
+    setTimeout(() => {
+      startMatchWithBot(newPlayer, "COMPETITIVE");
+    }, randomDelay);
   }
 
   function tryToMatchUnrankedPlayer() {
     const unranked = Array.from(unrankedQueue);
-    while (unranked.length >= 2) {
+
+    if (unranked.length >= 2) {
       const p1 = unranked.pop();
       const p2 = unranked.pop();
       unrankedQueue.delete(p1);
       unrankedQueue.delete(p2);
       startMatch(p1, p2, "UNRANKED");
     }
+
+    // start with bot from 4-10 seconds after queue start
+    const randomDelay = Math.floor(Math.random() * (10000 - 4000 + 1)) + 4000; // random between 4000 and 10000 ms
+    setTimeout(() => {
+      if(unranked.length == 1) {
+        const p1 = unranked.pop();
+        unrankedQueue.delete(p1);
+        startMatchWithBot(newPlayer, "UNRANKED");
+      }
+    }, randomDelay);
   }
 
   function getTolerance(waitTimeMs) {
@@ -224,7 +279,10 @@ export function setupSocket(server) {
       if (matched.has(p1.socketId) || matched.has(p2.socketId)) continue;
 
       const diff = Math.abs(p1.elo - p2.elo);
-      const waitTime = Math.min(Date.now() - p1.joinedAt, Date.now() - p2.joinedAt);
+      const waitTime = Math.min(
+        Date.now() - p1.joinedAt,
+        Date.now() - p2.joinedAt
+      );
       const threshold = getTolerance(waitTime);
 
       if (diff <= threshold) {
@@ -256,17 +314,17 @@ export function setupSocket(server) {
       socketId: user.socketId,
     }));
 
-    const score = new Map()
-    score.set(p1Data.uid,0)
-    score.set(p2Data.uid,0)
+    const score = new Map();
+    score.set(p1Data.uid, 0);
+    score.set(p2Data.uid, 0);
 
-    const readyCheck = new Map()
-    readyCheck.set(p1Data.uid,false)
-    readyCheck.set(p2Data.uid,false)
+    const readyCheck = new Map();
+    readyCheck.set(p1Data.uid, false);
+    readyCheck.set(p2Data.uid, false);
 
-    const game = { 
-      roomId, 
-      players, 
+    const game = {
+      roomId,
+      players,
       score: Object.fromEntries(score),
       readyCheck: Object.fromEntries(readyCheck),
       playerChoices: {},
@@ -282,26 +340,22 @@ export function setupSocket(server) {
       unrankedGames.set(roomId, game);
     }
 
-    io.to(roomId).emit("match-found",game);
-
-    // console.log(`Match started: ${p1Data.uid} vs ${p2Data.uid}`);
+    io.to(roomId).emit("match-found", game);
   }
 
   function startRound(roomId, firstRound) {
     const game = competitiveGames.get(roomId) || unrankedGames.get(roomId);
     if (!game) return;
-  
+
     game.round += 1;
     const currentRound = game.round;
     game.choicesAccepted[currentRound] = false;
-  
-    console.log("STARTING ROUND", currentRound);
-  
+
     const roundDuration = firstRound ? 30000 : 30000;
     const roundEndTime = Date.now() + roundDuration;
-  
+
     game.roundEndTime = roundEndTime;
-  
+
     io.to(roomId).emit("round-start", {
       round: currentRound,
       endsAt: game.roundEndTime,
@@ -312,21 +366,26 @@ export function setupSocket(server) {
       if (!g || g.choicesAccepted[currentRound]) return;
       io.to(roomId).emit("request-hands");
     }, roundDuration);
-    
+
+    const botPlayer = game.players.find((p) => p.isBot);
+    if (botPlayer) {
+      game.stopBot = playBotRound(io, roomId, game, acceptChoices);
+    }
   }
-  
 
   async function acceptChoices(roomId) {
     const game = competitiveGames.get(roomId) || unrankedGames.get(roomId);
     if (!game) return;
-  
+
     const round = game.round;
     const [p1, p2] = game.players;
     const choice1 = game.playerChoices[round]?.[p1.uid];
     const choice2 = game.playerChoices[round]?.[p2.uid];
-  
+
     if (!choice1 || !choice2) return;
-  
+
+    game.stopBot()
+
     // Determine winner
     let winner = null;
     if (choice1 === choice2) {
@@ -340,13 +399,13 @@ export function setupSocket(server) {
     } else {
       winner = p2.uid;
     }
-  
+
     if (winner !== "draw") {
       game.score[winner] += 1;
     }
-  
+
     game.choicesAccepted[round] = true;
-  
+
     io.to(roomId).emit("round-results", {
       round,
       choices: {
@@ -358,7 +417,6 @@ export function setupSocket(server) {
     });
 
     try {
-      // Create Match doc if not created yet
       if (!game.matchId) {
         const matchDoc = new Match({
           player1: game.players[0].uid,
@@ -370,10 +428,9 @@ export function setupSocket(server) {
         game.matchId = savedMatch._id;
       }
 
-      // Determine winner for DB (must be 'player1', 'player2', or 'draw')
-      let roundWinner = 'draw';
-      if (winner === game.players[0].uid) roundWinner = 'player1';
-      else if (winner === game.players[1].uid) roundWinner = 'player2';
+      let roundWinner = "draw";
+      if (winner === game.players[0].uid) roundWinner = "player1";
+      else if (winner === game.players[1].uid) roundWinner = "player2";
 
       const roundDoc = new Round({
         matchId: game.matchId,
@@ -389,30 +446,31 @@ export function setupSocket(server) {
       console.error("Error saving round to DB:", error);
     }
 
-
-  
     const winsNeeded = 4;
     const scoreVals = Object.values(game.score);
     const maxScore = Math.max(...scoreVals);
-  
+
     if (maxScore >= winsNeeded) {
-      game.gameEnded = true
-      game.winner = game.score[p1.uid] > game.score[p2.uid]
-      ? p1.uid
-      : game.score[p2.uid] > game.score[p1.uid]
-      ? p2.uid
-      : "draw",
+      game.gameEnded = true;
+      game.winner =
+        game.score[p1.uid] > game.score[p2.uid]
+          ? p1.uid
+          : game.score[p2.uid] > game.score[p1.uid]
+          ? p2.uid
+          : "draw";
+
       io.to(roomId).emit("match-end", {
         finalScore: game.score,
-        winner: game.winner
+        winner: game.winner,
       });
 
       try {
         if (game.matchId) {
-          // Map winner uid to player1/player2 or 'draw'
-          let matchWinner = 'draw';
-          if (game.winner === game.players[0].uid) matchWinner = game.players[0].uid;
-          else if (game.winner === game.players[1].uid) matchWinner = game.players[1].uid;
+          let matchWinner = "draw";
+          if (game.winner === game.players[0].uid)
+            matchWinner = game.players[0].uid;
+          else if (game.winner === game.players[1].uid)
+            matchWinner = game.players[1].uid;
 
           await Match.findByIdAndUpdate(game.matchId, {
             winner: matchWinner,
@@ -422,17 +480,59 @@ export function setupSocket(server) {
         console.error("Error updating match results:", error);
       }
 
-      // Clean up games after saving to DB
       competitiveGames.delete(roomId);
       unrankedGames.delete(roomId);
-
-
     } else {
       setTimeout(() => {
         startRound(roomId, false);
       }, 5000);
     }
   }
-  
-}
 
+  async function startMatchWithBot(humanPlayer, type) {
+    const roomId = crypto.randomUUID();
+    const botPlayer = await createHiddenBot(humanPlayer);
+
+    // Join human socket to room
+    const humanSocket = io.sockets.sockets.get(humanPlayer.socketId);
+    if (!humanSocket) return;
+    humanSocket.join(roomId);
+
+    const players = [
+      {
+        ...humanPlayer,
+      },
+      {
+        ...botPlayer,
+      },
+    ];
+
+    const score = new Map();
+    score.set(humanPlayer.uid, 0);
+    score.set(botPlayer.uid, 0);
+
+    const readyCheck = new Map();
+    readyCheck.set(humanPlayer.uid, false);
+    readyCheck.set(botPlayer.uid, false);
+
+    const game = {
+      roomId,
+      players,
+      score: Object.fromEntries(score),
+      readyCheck: Object.fromEntries(readyCheck),
+      playerChoices: {},
+      choicesAccepted: {},
+      gameStarted: false,
+      gameEnded: false,
+      round: 0,
+    };
+
+    if (type === "COMPETITIVE") {
+      competitiveGames.set(roomId, game);
+    } else {
+      unrankedGames.set(roomId, game);
+    }
+
+    io.to(roomId).emit("match-found", game);
+  }
+}
