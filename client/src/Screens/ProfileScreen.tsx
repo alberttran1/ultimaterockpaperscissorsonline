@@ -58,11 +58,10 @@ const ProfileScreen = () => {
           {renderAvatar()}
 
           {/* Info */}
-          <div className="flex-1">
+          <div className="flex-1 gap-2 flex-col flex">
             <h1 className="text-4xl font-adrenaline text-purple-300 mb-2">
               {user.username || "Unnamed"}
             </h1>
-            <p className="text-gray-400 mb-4">{user.email}</p>
 
             <div className="bg-gradient-to-r from-indigo-600 to-purple-700 px-6 py-2 rounded-full font-semibold text-xl w-fit shadow">
               ELO: {user.elo}
